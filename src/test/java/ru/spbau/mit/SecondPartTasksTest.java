@@ -13,7 +13,7 @@ import static junitx.framework.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class SecondPartTasksTest {
-    private static final String RES_DIR = "res/test";
+    private static final String RES_DIR = "src/test/resources";
 
     private static final List<String> getFiles() {
         try {
