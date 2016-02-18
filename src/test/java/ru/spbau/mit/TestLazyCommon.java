@@ -73,7 +73,7 @@ public class TestLazyCommon {
         }
         futures.forEach(f -> {
             try {
-                set.add(lazy.get());
+                set.add(f.get());
             } catch (Exception e) {
             }
         });
