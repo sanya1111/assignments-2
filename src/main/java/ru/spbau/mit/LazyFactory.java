@@ -3,14 +3,17 @@ package ru.spbau.mit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
-public class LazyFactory {
+public final class LazyFactory {
+    private LazyFactory(){
+    }
+
     private static final Object NONE = new Object();
 
-    private static class LazySimple<T> implements Lazy<T> {
+    private static final class LazySimple<T> implements Lazy<T> {
         private Object result = NONE;
         private Supplier<? extends T> function;
 
-        LazySimple(final Supplier<? extends T> function) {
+        private LazySimple(final Supplier<? extends T> function) {
             this.function = function;
         }
 
@@ -24,11 +27,11 @@ public class LazyFactory {
         }
     }
 
-    private static class LazyMultiThreadSync<T> implements Lazy<T> {
+    private static final class LazyMultiThreadSync<T> implements Lazy<T> {
         private volatile Object result = NONE;
         private Supplier<? extends T> function;
 
-        LazyMultiThreadSync(Supplier<? extends T> function) {
+        private LazyMultiThreadSync(Supplier<? extends T> function) {
             this.function = function;
         }
 

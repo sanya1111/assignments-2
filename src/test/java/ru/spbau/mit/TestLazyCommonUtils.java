@@ -15,7 +15,9 @@ import java.util.function.Supplier;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.fail;
 
-public class TestLazyCommonUtils {
+public final class TestLazyCommonUtils {
+    private TestLazyCommonUtils(){
+    }
 
     private static final class LazyChecker<T> implements Supplier<T> {
         private boolean valid = false;
@@ -39,7 +41,9 @@ public class TestLazyCommonUtils {
         private int testMode;
         private Object retValue;
 
-        LazySameChecker(int testMode, Object retValue) {
+        private static final int MODULO = 10;
+
+        private LazySameChecker(int testMode, Object retValue) {
             this.testMode = testMode;
             this.retValue = retValue;
         }
@@ -50,14 +54,15 @@ public class TestLazyCommonUtils {
                 fail();
             }
             iteration++;
-            if (testMode <= 1 || iteration % 10 == 0) {
+            if (testMode <= 1 || iteration % MODULO == 0) {
                 return retValue;
             }
             return null;
         }
     }
 
-    public static <T> void checkLazy(Function<Supplier<T>, Lazy<T>> lazyMaker) {
+    public static <T> void checkLazy(
+                Function<Supplier<T>, Lazy<T>> lazyMaker) {
         TestLazyCommonUtils.LazyChecker<T> checker = new TestLazyCommonUtils.LazyChecker<>();
         Lazy<T> lazy = lazyMaker.apply(checker);
         checker.setValid();
@@ -66,9 +71,10 @@ public class TestLazyCommonUtils {
 
     private static final int NRVALUE = 10000;
 
-    private static <T> Set<Object> putTasksToExecutorServiceAndCalculate(final Lazy<T> lazy, ExecutorService service) {
+    private static Set<Object> putTasksToExecutorServiceAndCalculate(
+            final Lazy<Object> lazy, ExecutorService service) {
         final Set<Object> set = new HashSet<>();
-        final List<Future<T>> futures = new ArrayList<Future<T>>();
+        final List<Future<Object>> futures = new ArrayList<Future<Object>>();
         for (int i = 0; i < NRVALUE; i++) {
             futures.add(service.submit(() -> lazy.get()));
         }
@@ -81,14 +87,16 @@ public class TestLazyCommonUtils {
         return set;
     }
 
-    public static void check(Function<Supplier<Object>, Lazy<Object>> lazyMaker, int threadsNum, int testMode, Object value) {
+    public static void check(
+            Function<Supplier<Object>, Lazy<Object>> lazyMaker, int threadsNum, int testMode, Object value) {
         ExecutorService service = Executors.newFixedThreadPool(threadsNum);
         LazySameChecker checker = new LazySameChecker(testMode, value);
         final Lazy<Object> lazy = lazyMaker.apply(checker);
         Set<Object> set = putTasksToExecutorServiceAndCalculate(lazy, service);
         Assert.assertEquals(set.size(), 1);
-        if (testMode < 2)
+        if (testMode < 2) {
             assert (value == set.iterator().next());
+        }
     }
 
 
