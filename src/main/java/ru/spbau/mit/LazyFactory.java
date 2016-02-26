@@ -71,15 +71,15 @@ public class LazyFactory {
         }
     }
 
-    public static <T> Lazy<T> createLazy1(final Supplier<T> calc) {
+    public static <T> Lazy<T> createLazySingleThread(final Supplier<T> calc) {
         return new LazySimple<T>(calc);
     }
 
-    public static <T> Lazy<T> createLazy2(final Supplier<T> calc) {
+    public static <T> Lazy<T> createLazyMultiThreadSync(final Supplier<T> calc) {
         return new LazyMultiThreadSync<T>(calc);
     }
 
-    public static <T> Lazy<T> createLazy3InnerClass(final Supplier<T> calc) {
+    public static <T> Lazy<T> createLazyMultiThreadWaitFree(final Supplier<T> calc) {
         return new LazyMultiThreadWaitFree<T>(calc);
     }
 }
