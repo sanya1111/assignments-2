@@ -122,5 +122,4 @@ public class SecondPartTasksTest {
         Assert.assertEquals(result2, SecondPartTasks.calculateGlobalOrder(PREMIUM_LIST));
     }
 
-
 }
