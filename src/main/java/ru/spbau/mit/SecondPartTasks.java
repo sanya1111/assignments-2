@@ -3,7 +3,10 @@ package ru.spbau.mit;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
@@ -38,7 +41,12 @@ public final class SecondPartTasks {
                 .generate(() -> Math.pow(RANDOM.nextDouble() - RADIUS, 2)
                         + Math.pow(RANDOM.nextDouble() - RADIUS, 2))
                 .limit(NTRYES)
-                .map(x -> x <= Math.pow(RADIUS, 2) ? 1 : 0)
+                .map(x -> {
+                    if (x <= Math.pow(RADIUS, 2)) {
+                        return 1;
+                    }
+                    return 0;
+                })
                 .average()
                 .getAsDouble();
     }

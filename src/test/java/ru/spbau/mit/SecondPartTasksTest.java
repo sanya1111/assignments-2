@@ -1,5 +1,6 @@
 package ru.spbau.mit;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -10,12 +11,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static junitx.framework.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class SecondPartTasksTest {
     private static final String RES_DIR = "src/test/resources";
 
-    private static final List<String> getFiles() {
+    private static List<String> getFiles() {
         try {
             return Files
                     .walk(Paths.get(RES_DIR))
@@ -27,7 +27,7 @@ public class SecondPartTasksTest {
         }
     }
 
-    private static final List<String> cutAllFilesSorted(List<String> files) {
+    private static List<String> cutAllFilesSorted(List<String> files) {
         return files.stream()
                 .map(x -> Paths.get(x).getFileName().toString())
                 .sorted()
@@ -41,7 +41,8 @@ public class SecondPartTasksTest {
                 cutAllFilesSorted(SecondPartTasks.findQuotes(files, "random")));
         assertEquals(Arrays.asList("Day that never comes"),
                 cutAllFilesSorted(SecondPartTasks.findQuotes(files, "yeaahh")));
-        assertEquals(Arrays.asList("Day that never comes", "Hello_world"),
+        assertEquals(Arrays.asList("Day that never comes",
+                "Hello_world"),
                 cutAllFilesSorted(SecondPartTasks.findQuotes(files, "word")));
     }
 
@@ -49,7 +50,8 @@ public class SecondPartTasksTest {
 
     @Test
     public void testPiDividedBy4() {
-        assertEquals(Math.PI / 4, SecondPartTasks.piDividedBy4(), EPS);
+        final double res1 = Math.PI / 4;
+        assertEquals(res1, SecondPartTasks.piDividedBy4(), EPS);
     }
 
     private static final List<String> PUSHKIN = Arrays.asList("aaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccc");
@@ -78,53 +80,46 @@ public class SecondPartTasksTest {
         assertEquals("2Pac", SecondPartTasks.findPrinter(MAP_AUTHOR_ALL));
     }
 
-    private static final Map<String, Integer> PYTEROCHKA = new HashMap<String, Integer>() {
-        {
-            put("SYR", 100);
-            put("MYASO", 100500);
-            put("VODKO", ((int) 3L));
-        }
-    };
+    private static final Map<String, Integer> PYTEROCHKA = ImmutableMap.of(
+            "SYR", 100,
+            "MYASO", 100500,
+            "VODKO", ((int) 3L)
+    );
 
-    private static final Map<String, Integer> MAGNIT = new HashMap<String, Integer>() {
-        {
-            put("SYR", 5);
-            put("MYASO", 100500);
-            put("VODKO", ((int) 10L));
-            put("VINE PREMIUM", ((int) 1L));
-        }
-    };
+    private static final Map<String, Integer> MAGNIT = ImmutableMap.of(
+            "SYR", 5,
+            "MYASO", 100500,
+            "VODKO", ((int) 10L),
+            "VINE PREMIUM", ((int) 1L)
+    );
 
-    private static final Map<String, Integer> PRODUCTY_PLUS_MINUS = new HashMap<String, Integer>() {
-        {
-            put("OTSTOY", 100500);
-        }
-    };
+    private static final Map<String, Integer> PRODUCTY_PLUS_MINUS = ImmutableMap.of(
+            "OTSTOY", 100500
+    );
 
     private static final List<Map<String, Integer>> PREMIUM_LIST = Arrays.asList(PYTEROCHKA, MAGNIT);
-    private static final List<Map<String, Integer>> CHEAP_LIST = Arrays.asList(PYTEROCHKA, MAGNIT, PRODUCTY_PLUS_MINUS);
+    private static final List<Map<String, Integer>> CHEAP_LIST =
+            Arrays.asList(PYTEROCHKA, MAGNIT, PRODUCTY_PLUS_MINUS);
 
 
     @Test
     public void testCalculateGlobalOrder() {
-        Assert.assertEquals(new HashMap<String, Integer>() {
-            {
-                put("OTSTOY", 100500);
-                put("VINE PREMIUM", ((int) 1L));
-                put("VODKO", ((int) 13L));
-                put("MYASO", 201000);
-                put("SYR", 105);
-            }
-        }, SecondPartTasks.calculateGlobalOrder(CHEAP_LIST));
+        final Map<String, Integer> result1 = ImmutableMap.of(
+            "OTSTOY", 100500,
+            "VINE PREMIUM", ((int) 1L),
+            "VODKO", ((int) 13L),
+            "MYASO", 201000,
+            "SYR", 105
+        );
+        Assert.assertEquals(result1, SecondPartTasks.calculateGlobalOrder(CHEAP_LIST));
 
-        Assert.assertEquals(new HashMap<String, Integer>() {
-            {
-                put("VINE PREMIUM", ((int) 1L));
-                put("VODKO", ((int) 13L));
-                put("MYASO", 201000);
-                put("SYR", 105);
-            }
-        }, SecondPartTasks.calculateGlobalOrder(PREMIUM_LIST));
+        final Map<String, Integer> result2 = ImmutableMap.of(
+                "VINE PREMIUM", ((int) 1L),
+                "VODKO", ((int) 13L),
+                "MYASO", 201000,
+                "SYR", 105
+        );
+        Assert.assertEquals(result2, SecondPartTasks.calculateGlobalOrder(PREMIUM_LIST));
     }
 
 
