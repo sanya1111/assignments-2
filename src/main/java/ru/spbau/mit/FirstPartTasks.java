@@ -28,7 +28,7 @@ public final class FirstPartTasks {
     public static List<String> allTracksSorted(Stream<Album> albums) {
         return albums
                 .map(Album::getTracks)
-                .flatMap((y) -> y.stream())
+                .flatMap(Collection::stream)
                 .map(Track::getName)
                 .sorted().collect(Collectors.toList());
     }
@@ -39,8 +39,8 @@ public final class FirstPartTasks {
 
     public static List<Album> sortedFavorites(Stream<Album> s) {
         return s
-                .filter((x) -> x.getTracks().stream()
-                        .anyMatch((y) -> y.getRating() > RATING_BOUND))
+                .filter(x -> x.getTracks().stream()
+                        .anyMatch(y -> y.getRating() > RATING_BOUND))
                 .sorted(Comparator.comparing(Album::getName))
                 .collect(Collectors.toList());
     }
@@ -110,8 +110,6 @@ public final class FirstPartTasks {
 
     // Вернуть поток из объектов класса 'clazz'
     public static <R> Stream<R> filterIsInstance(Stream<?> s, Class<R> clazz) {
-        return s
-                .filter(x -> clazz.isInstance(x))
-                .map(x -> clazz.cast(x));
+        return (Stream<R>) s.filter(x -> clazz.isInstance(x));
     }
 }

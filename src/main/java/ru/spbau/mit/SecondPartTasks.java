@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 public final class SecondPartTasks {
 
@@ -30,38 +31,16 @@ public final class SecondPartTasks {
     // какова вероятность попасть в мишень.
     private static final int NTRYES = 1000000;
     private static final double RADIUS = 0.5;
-    private static final int ADDING_SIZE = 4;
-    private static final int COUNTING_SIZE = 5;
+    private static final Random RANDOM = new Random();
 
     public static double piDividedBy4() {
-        return new Random()
-                .doubles(0, 1)
-                .boxed().limit(NTRYES)
-                .map(x -> new ArrayList<Double>(Arrays.asList(0.0, 0.0, 0.0, x)))
-                .reduce(
-                        new ArrayList<Double>(Arrays.asList(0.0, 0.0, 0.0)),
-                        (x, y) -> {
-                            if (y.size() == ADDING_SIZE) {
-                                x.add(y.get(ADDING_SIZE - 1));
-                            }
-                            if (x.size() == COUNTING_SIZE) {
-                                x.set(1, x.get(1) + 1);
-                                double a = x.get(COUNTING_SIZE - 2) - RADIUS;
-                                double b = x.get(COUNTING_SIZE - 1) - RADIUS;
-                                if (a * a + b * b <= RADIUS * RADIUS) {
-                                    x.set(0, x.get(0) + 1);
-                                }
-                                x.remove(COUNTING_SIZE - 1);
-                                x.remove(COUNTING_SIZE - 2);
-                            }
-                            x.set(0, x.get(0) + y.get(0));
-                            x.set(1, x.get(1) + y.get(1));
-                            if (x.get(1) != 0) {
-                                x.set(2, x.get(0) / x.get(1));
-                            }
-                            return x;
-                        }
-                ).get(2);
+        return DoubleStream
+                .generate(() -> Math.pow(RANDOM.nextDouble() - RADIUS, 2)
+                        + Math.pow(RANDOM.nextDouble() - RADIUS, 2))
+                .limit(NTRYES)
+                .map(x -> x <= Math.pow(RADIUS, 2) ? 1 : 0)
+                .average()
+                .getAsDouble();
     }
 
 

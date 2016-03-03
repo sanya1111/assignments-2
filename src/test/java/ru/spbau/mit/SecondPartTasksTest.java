@@ -49,7 +49,7 @@ public class SecondPartTasksTest {
 
     @Test
     public void testPiDividedBy4() {
-        assert (Math.abs(Math.PI / 4 - SecondPartTasks.piDividedBy4()) < EPS);
+        assertEquals(Math.PI / 4, SecondPartTasks.piDividedBy4(), EPS);
     }
 
     private static final List<String> PUSHKIN = Arrays.asList("aaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccc");
