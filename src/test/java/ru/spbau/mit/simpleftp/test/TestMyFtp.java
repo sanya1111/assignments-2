@@ -5,9 +5,9 @@ import static org.junit.Assert.assertTrue;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import ru.spbau.mit.simpleftp.client.MyFtpClient;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 import ru.spbau.mit.simpleftp.server.MyFtpServer;
