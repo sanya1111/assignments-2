@@ -22,8 +22,8 @@ public class TestMyFtp {
 
 	private final static Path LIST_CLIENT_REQUEST = Paths.get("");
 	private final static Path LIST_CLIENT_FAIL_REQUEST = Paths.get("NOPE");
-	private final static Path GET_CLIENT_REQUEST = Paths.get("pushkin/serv.jar");
-	private final static Path GET_CLIENT_DOWNLOAD_PATH = DOWNLOAD_FILES.resolve(Paths.get("newserv.jar"));
+	private final static Path GET_CLIENT_REQUEST = Paths.get("pushkin/serv");
+	private final static Path GET_CLIENT_DOWNLOAD_PATH = DOWNLOAD_FILES.resolve(Paths.get("newserv"));
 	private final static Path GET_CLIENT_FAIL_REQUEST = DOWNLOAD_FILES.resolve("NOPE");
 
 	private final static int SERVER_INIT_WAIT_TIME = 5000;
@@ -44,10 +44,6 @@ public class TestMyFtp {
 		}
 	}
 
-	/* test depends on connection and privacy settings and 
-	 * can be random failed on travis service 
-	 */
-	@Ignore
 	@Test
 	public void testMyFtpWithConnection() {
 		Thread serverThread = new Thread(new Server(newServer()));
