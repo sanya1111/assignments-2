@@ -11,57 +11,57 @@ import ru.spbau.mit.simpleftp.common.MyFtpGetResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 
 public class MyFtpSocketResponseReader {
-	ObjectInputStream socketInputStream;
+    private ObjectInputStream socketInputStream;
 
-	public MyFtpSocketResponseReader(Socket socket) throws IOException {
-		super();
-		socketInputStream = new ObjectInputStream(socket.getInputStream());
-	}
+    public MyFtpSocketResponseReader(Socket socket) throws IOException {
+        super();
+        socketInputStream = new ObjectInputStream(socket.getInputStream());
+    }
 
-	private static final int READ_WRITE_BLOCK_SIZE = 4096;
+    private static final int READ_WRITE_BLOCK_SIZE = 4096;
 
-	public MyFtpGetResponse nextMyFtpGetResponse(Path newFileLocation) throws IOException {
-		MyFtpGetResponse response = new MyFtpGetResponse();
-		response.setPath(newFileLocation);
-		response.setSize(socketInputStream.readLong());
+    public MyFtpGetResponse nextMyFtpGetResponse(Path newFileLocation) throws IOException {
+        MyFtpGetResponse response = new MyFtpGetResponse();
+        response.setPath(newFileLocation);
+        response.setSize(socketInputStream.readLong());
 
-		if (!response.isFailed()) {
-			byte readWriteBlock[] = new byte[READ_WRITE_BLOCK_SIZE];
-			try (BufferedOutputStream fileStream = new BufferedOutputStream(
-					new FileOutputStream(response.getPath().toString()))) {
-				int gotBytes = 0;
-				for (Long index = 0L; index < response.getSize(); index += gotBytes) {
-					gotBytes = socketInputStream.read(readWriteBlock);
+        if (!response.isFailed()) {
+            byte[] readWriteBlock = new byte[READ_WRITE_BLOCK_SIZE];
+            try (BufferedOutputStream fileStream = new BufferedOutputStream(
+                    new FileOutputStream(response.getPath().toString()))) {
+                int gotBytes = 0;
+                for (Long index = 0L; index < response.getSize(); index += gotBytes) {
+                    gotBytes = socketInputStream.read(readWriteBlock);
 
-					if (gotBytes == -1) {
-						throw new IOException();
-					}
+                    if (gotBytes == -1) {
+                        throw new IOException();
+                    }
 
-					fileStream.write(readWriteBlock, 0, gotBytes);
-				}
-			}
-		}
-		return response;
-	}
+                    fileStream.write(readWriteBlock, 0, gotBytes);
+                }
+            }
+        }
+        return response;
+    }
 
-	public MyFtpListResponse nextMyFtpListResponse() throws IOException {
-		MyFtpListResponse response = new MyFtpListResponse();
-		int size = socketInputStream.readInt();
-		for (int index = 0; index < size; index++) {
-			String gotFileName;
-			try {
-				gotFileName = (String) socketInputStream.readObject();
-			} catch (ClassNotFoundException e) {
-				throw new IOException();
-			}
-			boolean isDir = socketInputStream.readBoolean();
-			response.addEntry(new MyFtpListResponse.Entry(gotFileName, isDir));
-		}
-		return response;
-	}
+    public MyFtpListResponse nextMyFtpListResponse() throws IOException {
+        MyFtpListResponse response = new MyFtpListResponse();
+        int size = socketInputStream.readInt();
+        for (int index = 0; index < size; index++) {
+            String gotFileName;
+            try {
+                gotFileName = (String) socketInputStream.readObject();
+            } catch (ClassNotFoundException e) {
+                throw new IOException();
+            }
+            boolean isDir = socketInputStream.readBoolean();
+            response.addEntry(new MyFtpListResponse.Entry(gotFileName, isDir));
+        }
+        return response;
+    }
 
-	public void close() throws IOException {
-		socketInputStream.close();
-	}
+    public void close() throws IOException {
+        socketInputStream.close();
+    }
 
 }
