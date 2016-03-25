@@ -1,35 +1,34 @@
 package ru.spbau.mit.simpleftp.client;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 
 public class MyFtpSocketRequestWriter {
-    private ObjectOutputStream objectStream;
+    private DataOutputStream dataStream;
 
     public MyFtpSocketRequestWriter(Socket socket) throws IOException {
-        super();
-        objectStream = new ObjectOutputStream(socket.getOutputStream());
+        dataStream = new DataOutputStream(socket.getOutputStream());
     }
 
     public void writeMyFtpRequest(MyFtpRequest request) throws IOException {
         switch (request.getType()) {
-        case LIST:
-            objectStream.writeInt(1);
-            break;
-        case GET:
-            objectStream.writeInt(2);
-            break;
-        default:
-            break;
+            case LIST:
+                dataStream.writeInt(1);
+                break;
+            case GET:
+                dataStream.writeInt(2);
+                break;
+            default:
+                break;
         }
-        objectStream.writeObject(request.getPath().toString());
-        objectStream.flush();
+        dataStream.writeUTF(request.getPath().toString());
+        dataStream.flush();
     }
 
     public void close() throws IOException {
-        objectStream.close();
+        dataStream.close();
     }
 }

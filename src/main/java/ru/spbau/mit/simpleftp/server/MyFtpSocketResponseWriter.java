@@ -1,9 +1,9 @@
 package ru.spbau.mit.simpleftp.server;
 
 import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import ru.spbau.mit.simpleftp.common.MyFtpGetResponse;
@@ -11,28 +11,27 @@ import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpResponse;
 
 public class MyFtpSocketResponseWriter {
-    private ObjectOutputStream objectStream;
+    private DataOutputStream dataStream;
 
     public MyFtpSocketResponseWriter(Socket socket) throws IOException {
-        super();
-        objectStream = new ObjectOutputStream(socket.getOutputStream());
+        dataStream = new DataOutputStream(socket.getOutputStream());
     }
 
     private void writeMyFtpListResponse(MyFtpListResponse response) throws IOException {
-        objectStream.writeInt(response.getContents().size());
+        dataStream.writeInt(response.getContents().size());
         for (MyFtpListResponse.Entry entry : response.getContents()) {
-            objectStream.writeObject(entry.getFileName());
-            objectStream.writeBoolean(entry.isDir());
+            dataStream.writeUTF(entry.getFileName());
+            dataStream.writeBoolean(entry.isDir());
         }
-        objectStream.flush();
+        dataStream.flush();
     }
 
     private static final int READ_WRITE_BLOCK_SIZE = 4096;
 
     private void writeMyFtpGetResponse(MyFtpGetResponse response) throws IOException {
         MyFtpGetResponse getResponse = (MyFtpGetResponse) response;
-        objectStream.writeLong(getResponse.getSize());
-        objectStream.flush();
+        dataStream.writeLong(getResponse.getSize());
+        dataStream.flush();
         /* old staff */
         if (!response.isFailed()) {
             byte[] readWriteBlock = new byte[READ_WRITE_BLOCK_SIZE];
@@ -45,8 +44,8 @@ public class MyFtpSocketResponseWriter {
                         break;
                     }
 
-                    objectStream.write(readWriteBlock, 0, gotBytes);
-                    objectStream.flush();
+                    dataStream.write(readWriteBlock, 0, gotBytes);
+                    dataStream.flush();
                 }
             }
         }
@@ -61,6 +60,6 @@ public class MyFtpSocketResponseWriter {
     }
 
     public void close() throws IOException {
-        objectStream.close();
+        dataStream.close();
     }
 }

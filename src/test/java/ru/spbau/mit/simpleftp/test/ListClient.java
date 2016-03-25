@@ -4,38 +4,37 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ru.spbau.mit.simpleftp.client.MyFtpClient;
 import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 
-public class ListClient extends Client implements Runnable {
+public class ListClient extends Client {
 
-    private MyFtpClient client;
     private Path serverPathDirToCheck;
     private MyFtpRequest request;
 
     private static final int REQUEST_PACKAGES_NUM = 10;
 
-    public ListClient(MyFtpClient client, Path serverPathDirToCheck, MyFtpRequest request) {
-        super();
-        this.client = client;
+    public ListClient(Path configPath, PrintStream log, Path serverPathDirToCheck, MyFtpRequest request) {
+        super(configPath, log);
         this.serverPathDirToCheck = serverPathDirToCheck;
         this.request = request;
     }
 
+    @Override
     public void doRun() throws IOException {
-        connect(client);
+        connectingLoop();
         Set<String> paths = Files.list(serverPathDirToCheck).map(x -> x.getFileName().toString())
                 .collect(Collectors.toSet());
         for (int i = 0; i < REQUEST_PACKAGES_NUM; i++) {
-            client.sendRequest(request);
-            MyFtpListResponse response = client.nextMyFtpListResponse();
+            sendRequest(request);
+            MyFtpListResponse response = nextMyFtpListResponse();
             List<MyFtpListResponse.Entry> contents = response.getContents();
             assertEquals(contents.size(), paths.size());
             for (MyFtpListResponse.Entry entry : contents) {
@@ -43,24 +42,6 @@ public class ListClient extends Client implements Runnable {
                 assertEquals(entry.isDir(), Files.isDirectory(serverPathDirToCheck.resolve(entry.getFileName())));
             }
         }
-        client.closeSocket();
+        closeSocket();
     }
-
-    private volatile boolean result = true;
-
-    @Override
-    public void run() {
-        try {
-            doRun();
-        } catch (Exception | AssertionError e) {
-            e.printStackTrace();
-            result = false;
-        }
-    }
-
-    @Override
-    public boolean getResult() {
-        return result;
-    }
-
 }

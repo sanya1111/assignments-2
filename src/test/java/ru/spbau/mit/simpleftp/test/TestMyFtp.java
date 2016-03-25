@@ -7,17 +7,17 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-import ru.spbau.mit.simpleftp.client.MyFtpClient;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 import ru.spbau.mit.simpleftp.server.MyFtpServer;
 
 public class TestMyFtp {
-    private static final Path CONFIG_DIR = Paths.get("res/conf");
+    private static final Path RES_DIR = Paths.get("src/test/resources");
+    private static final Path CONFIG_DIR = RES_DIR.resolve("conf");
     private static final Path CLIENT_CONF = CONFIG_DIR.resolve("client.conf");
     private static final Path DB_CONF = CONFIG_DIR.resolve("db.conf");
 
-    private static final Path FTP_FILES = Paths.get("res/ftp_files");
-    private static final Path DOWNLOAD_FILES = Paths.get("res/download_files");
+    private static final Path FTP_FILES = RES_DIR.resolve("ftp_files");
+    private static final Path DOWNLOAD_FILES = RES_DIR.resolve("download_files");
 
     private static final Path LIST_CLIENT_REQUEST = Paths.get("");
     private static final Path LIST_CLIENT_FAIL_REQUEST = Paths.get("NOPE");
@@ -27,15 +27,33 @@ public class TestMyFtp {
 
     private static final int SERVER_INIT_WAIT_TIME = 5000;
 
-    private MyFtpClient newClient() {
-        return new MyFtpClient(CLIENT_CONF, System.out);
+    private static GetClient newGetClient() {
+        return new GetClient(CLIENT_CONF, System.out, FTP_FILES.resolve(GET_CLIENT_REQUEST),
+                GET_CLIENT_DOWNLOAD_PATH, new MyFtpRequest(MyFtpRequest.Type.GET, GET_CLIENT_REQUEST));
     }
 
-    private MyFtpServer newServer() {
+    private static GetClientFail newGetClientFail() {
+        return new GetClientFail(CLIENT_CONF, System.out, GET_CLIENT_DOWNLOAD_PATH,
+                new MyFtpRequest(MyFtpRequest.Type.GET, GET_CLIENT_FAIL_REQUEST));
+
+    }
+
+    private static ListClient newListClient() {
+        return new ListClient(CLIENT_CONF, System.out, FTP_FILES,
+                new MyFtpRequest(MyFtpRequest.Type.LIST, LIST_CLIENT_REQUEST));
+    }
+
+    private static ListClientFail newListClientFail() {
+        return new ListClientFail(CLIENT_CONF, System.out,
+                new MyFtpRequest(MyFtpRequest.Type.LIST, LIST_CLIENT_FAIL_REQUEST));
+
+    }
+
+    private static MyFtpServer newServer() {
         return new MyFtpServer(DB_CONF, new ServerLogStream(System.err), System.in);
     }
 
-    private void doJoin(Thread thread) {
+    private static void doJoin(Thread thread) {
         try {
             thread.join();
         } catch (InterruptedException e) {
@@ -57,17 +75,10 @@ public class TestMyFtp {
             e.printStackTrace();
         }
 
-        ListClient testListClient = new ListClient(newClient(), FTP_FILES,
-                new MyFtpRequest(MyFtpRequest.Type.LIST, LIST_CLIENT_REQUEST));
-
-        ListClientFail testListClientFail = new ListClientFail(newClient(),
-                new MyFtpRequest(MyFtpRequest.Type.LIST, LIST_CLIENT_FAIL_REQUEST));
-
-        GetClient testGetClient = new GetClient(newClient(), FTP_FILES.resolve(GET_CLIENT_REQUEST),
-                GET_CLIENT_DOWNLOAD_PATH, new MyFtpRequest(MyFtpRequest.Type.GET, GET_CLIENT_REQUEST));
-
-        GetClientFail testGetClientFail = new GetClientFail(newClient(), null,
-                new MyFtpRequest(MyFtpRequest.Type.GET, GET_CLIENT_FAIL_REQUEST));
+        ListClient testListClient = newListClient();
+        ListClientFail testListClientFail = newListClientFail();
+        GetClient testGetClient = newGetClient();
+        GetClientFail testGetClientFail = newGetClientFail();
 
         Thread clientListThread = new Thread(testListClient);
         Thread clientListFailThread = new Thread(testListClientFail);

@@ -3,47 +3,30 @@ package ru.spbau.mit.simpleftp.test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Path;
 
-import ru.spbau.mit.simpleftp.client.MyFtpClient;
 import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 
-public class ListClientFail extends Client implements Runnable {
-    private MyFtpClient client;
+public class ListClientFail extends Client {
     private MyFtpRequest request;
 
     private static final int REQUEST_PACKAGES_NUM = 10;
 
-    public ListClientFail(MyFtpClient client, MyFtpRequest request) {
-        super();
-        this.client = client;
+    public ListClientFail(Path configPath, PrintStream log, MyFtpRequest request) {
+        super(configPath, log);
         this.request = request;
     }
 
+    @Override
     public void doRun() throws IOException {
-        connect(client);
+        connectingLoop();
         for (int i = 0; i < REQUEST_PACKAGES_NUM; i++) {
-            client.sendRequest(request);
-            MyFtpListResponse response = client.nextMyFtpListResponse();
+            sendRequest(request);
+            MyFtpListResponse response = nextMyFtpListResponse();
             assertTrue(response.isFailed());
         }
-        client.closeSocket();
-    }
-
-    private volatile boolean result = true;
-
-    @Override
-    public void run() {
-        try {
-            doRun();
-        } catch (Exception | AssertionError e) {
-            e.printStackTrace();
-            result = false;
-        }
-    }
-
-    @Override
-    public boolean getResult() {
-        return result;
+        closeSocket();
     }
 }

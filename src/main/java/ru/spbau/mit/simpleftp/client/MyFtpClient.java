@@ -6,9 +6,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 
+import ru.spbau.mit.simpleftp.common.MyFtpGetInputStreamResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpGetResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
@@ -26,12 +26,12 @@ public class MyFtpClient {
     private PrintStream log;
 
     void parseConfig(Path configPath) throws IOException {
-        Map<String, List<String>> parsed = ConfigParser.parseConfig(configPath);
-        if (parsed.containsKey("host")) {
-            host = parsed.get("host").get(0);
+        Properties properties = ConfigParser.parseConfig(configPath);
+        if (properties.containsKey("host")) {
+            host = properties.getProperty("host");
         }
-        if (parsed.containsKey("port")) {
-            port = Integer.parseInt(parsed.get("port").get(0));
+        if (properties.containsKey("port")) {
+            port = Integer.parseInt(properties.getProperty("port"));
         }
     }
 
@@ -69,6 +69,10 @@ public class MyFtpClient {
 
     public synchronized MyFtpGetResponse nextMyFtpGetResponse(Path newFileLocation) throws IOException {
         return socketReader.nextMyFtpGetResponse(newFileLocation);
+    }
+
+    public synchronized MyFtpGetInputStreamResponse nextMyFtpGetInputStreamResponse() throws IOException {
+        return socketReader.nextMyFtpGetInputStreamResponse();
     }
 
     public synchronized void closeSocket() throws IOException {

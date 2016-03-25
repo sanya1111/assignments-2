@@ -1,27 +1,24 @@
 package ru.spbau.mit.simpleftp.server;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 import ru.spbau.mit.simpleftp.common.MyFtpGetResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 import ru.spbau.mit.simpleftp.common.MyFtpResponse;
+import ru.spbau.mit.simpleftp.server.MyFtpServer.MyFtpSharedComponents;
 
 public class MyFtpHander implements Runnable {
     private Socket socket;
-    private PrintStream log;
-    private MyFtpSocketRequestReader requestReader = null;
-    private MyFtpSocketResponseWriter responseWriter = null;
-    private Path rootDir;
+    private MyFtpSharedComponents sharedComponents;
+    private MyFtpSocketRequestReader requestReader;
+    private MyFtpSocketResponseWriter responseWriter;
 
-    MyFtpHander(Socket socket, PrintStream log, Path rootDir) {
+    MyFtpHander(Socket socket, MyFtpSharedComponents sharedComponents) {
         this.socket = socket;
-        this.log = log;
-        this.rootDir = rootDir;
+        this.sharedComponents = sharedComponents;
     }
 
     @Override
@@ -30,82 +27,92 @@ public class MyFtpHander implements Runnable {
             requestReader = new MyFtpSocketRequestReader(socket);
             responseWriter = new MyFtpSocketResponseWriter(socket);
         } catch (IOException e) {
-            e.printStackTrace(log);
+            e.printStackTrace(sharedComponents.log);
             return;
         }
 
         String hostAddr = socket.getInetAddress().getHostAddress();
 
-        log.println(String.format("New client %s have connected", hostAddr));
+        sharedComponents.log.println(String.format("New client %s have connected", hostAddr));
 
         for (int requestId = 0;; requestId++) {
             MyFtpRequest request = null;
             try {
-                request = requestReader.nextMyFtpRequest().resolvePathWithRootDir(rootDir);
+                request = requestReader.nextMyFtpRequest().resolvePathWithRootDir(sharedComponents.rootDir);
             } catch (IOException e) {
-                e.printStackTrace(log);
+                e.printStackTrace(sharedComponents.log);
                 break;
             } catch (MyFtpSocketRequestReader.MyFtpParseRequestException e) {
-                e.printStackTrace(log);
+                e.printStackTrace(sharedComponents.log);
                 continue;
             }
 
-            log.println(String.format("Client %s send %d request %s", hostAddr, requestId, request.toString()));
+            sharedComponents.log.println(
+                    String.format("Client %s send %d request %s", hostAddr, requestId, request.toString()));
 
-            MyFtpResponse response = dispatchResponse(request);
+            MyFtpResponse response;
+            try {
+                response = dispatchResponse(request);
+            } catch (MyFtpDispatchException e1) {
+                e1.printStackTrace(sharedComponents.log);
+                continue;
+            }
+
             try {
                 responseWriter.writeMyFtpResponse(response);
             } catch (IOException e) {
-                e.printStackTrace(log);
+                e.printStackTrace(sharedComponents.log);
             }
-            log.println(String.format("Response to client %s to %d request have sended", hostAddr, requestId));
+            sharedComponents.log.println(
+                    String.format("Response to client %s to %d request have sended", hostAddr, requestId));
         }
 
-        log.println(String.format("Client %s have disconnected", hostAddr));
+        sharedComponents.log.println(String.format("Client %s have disconnected", hostAddr));
         closeSocket();
     }
 
-    public void closeSocket() {
-        if (requestReader != null) {
-            try {
-                requestReader.close();
-            } catch (IOException e) {
-                e.printStackTrace(log);
-            }
+    private void closeSocket() {
+        try {
+            requestReader.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace(sharedComponents.log);
         }
 
-        if (responseWriter != null) {
-            try {
-                responseWriter.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace(log);
-            }
+        try {
+            responseWriter.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace(sharedComponents.log);
         }
 
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace(log);
-            }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace(sharedComponents.log);
         }
     }
 
-    MyFtpResponse dispatchResponse(MyFtpRequest request) {
+    private class MyFtpDispatchException extends Exception{
+        private static final long serialVersionUID = 8964566548132270723L;
+    }
+
+    private MyFtpResponse dispatchResponse(MyFtpRequest request) throws MyFtpDispatchException {
         switch (request.getType()) {
-        case LIST:
-            return getResponseFromListResponse(request);
-        default:
-            return getResponseFromGetResponse(request);
+            case LIST:
+                return getResponseFromListResponse(request);
+            case GET:
+                return getResponseFromGetResponse(request);
+            default:
+                throw new MyFtpDispatchException();
         }
     }
 
-    public MyFtpListResponse getResponseFromListResponse(MyFtpRequest request) {
+    private MyFtpListResponse getResponseFromListResponse(MyFtpRequest request) {
         MyFtpListResponse response = new MyFtpListResponse();
         if (!Files.isDirectory(request.getPath())) {
-            log.println(request.getPath().toString() + " isn't dir");
+            sharedComponents.log.println(request.getPath().toString() + " isn't dir");
             response.setFailed();
             return response;
         }
@@ -116,15 +123,15 @@ public class MyFtpHander implements Runnable {
             });
         } catch (IOException e) {
             response.setFailed();
-            e.printStackTrace(log);
+            e.printStackTrace(sharedComponents.log);
         }
         return response;
     }
 
-    public MyFtpGetResponse getResponseFromGetResponse(MyFtpRequest request) {
+    private MyFtpGetResponse getResponseFromGetResponse(MyFtpRequest request) {
         MyFtpGetResponse response = new MyFtpGetResponse();
         if (!Files.exists(request.getPath())) {
-            log.println(request.getPath().toString() + " isn't exists");
+            sharedComponents.log.println(request.getPath().toString() + " isn't exists");
             response.setFailed();
             return response;
         }
@@ -132,7 +139,7 @@ public class MyFtpHander implements Runnable {
         try {
             response.setSize(Files.size(request.getPath()));
         } catch (IOException e) {
-            e.printStackTrace(log);
+            e.printStackTrace(sharedComponents.log);
             response.setFailed();
         }
         return response;

@@ -3,6 +3,7 @@ package ru.spbau.mit.simpleftp.common;
 import java.nio.file.Path;
 
 public class MyFtpRequest {
+    public MyFtpRequest() {}
     public enum Type {
         GET, LIST;
     }
@@ -26,12 +27,7 @@ public class MyFtpRequest {
         return path;
     }
 
-    public MyFtpRequest() {
-        super();
-    }
-
     public MyFtpRequest(Type type, Path path) {
-        super();
         this.type = type;
         this.path = path;
     }
@@ -40,12 +36,12 @@ public class MyFtpRequest {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         switch (type) {
-        case GET:
-            stringBuilder.append("GET ");
-            break;
-        default:
-            stringBuilder.append("LIST ");
-            break;
+            case GET:
+                stringBuilder.append("GET ");
+                break;
+            default:
+                stringBuilder.append("LIST ");
+                break;
         }
         stringBuilder.append(path.toString());
         return stringBuilder.toString();
@@ -55,5 +51,4 @@ public class MyFtpRequest {
         path = rootDir.resolve(path);
         return this;
     }
-
 }
