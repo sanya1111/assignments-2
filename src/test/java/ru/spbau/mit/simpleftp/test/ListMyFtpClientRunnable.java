@@ -14,14 +14,15 @@ import java.util.stream.Collectors;
 import ru.spbau.mit.simpleftp.common.MyFtpListResponse;
 import ru.spbau.mit.simpleftp.common.MyFtpRequest;
 
-public class ListClient extends Client {
+public class ListMyFtpClientRunnable extends MyFtpClientRunnable {
 
     private Path serverPathDirToCheck;
     private MyFtpRequest request;
 
     private static final int REQUEST_PACKAGES_NUM = 10;
 
-    public ListClient(Path configPath, PrintStream log, Path serverPathDirToCheck, MyFtpRequest request) {
+    public ListMyFtpClientRunnable(
+            Path configPath, PrintStream log, Path serverPathDirToCheck, MyFtpRequest request) {
         super(configPath, log);
         this.serverPathDirToCheck = serverPathDirToCheck;
         this.request = request;
@@ -29,7 +30,6 @@ public class ListClient extends Client {
 
     @Override
     public void doRun() throws IOException {
-        connectingLoop();
         Set<String> paths = Files.list(serverPathDirToCheck).map(x -> x.getFileName().toString())
                 .collect(Collectors.toSet());
         for (int i = 0; i < REQUEST_PACKAGES_NUM; i++) {
@@ -42,6 +42,5 @@ public class ListClient extends Client {
                 assertEquals(entry.isDir(), Files.isDirectory(serverPathDirToCheck.resolve(entry.getFileName())));
             }
         }
-        closeSocket();
     }
 }

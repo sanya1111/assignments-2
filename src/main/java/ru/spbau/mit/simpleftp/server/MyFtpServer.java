@@ -36,6 +36,20 @@ public class MyFtpServer implements Runnable {
     private ServerSocket serverSocket;
     private BufferedReader controlInput;
 
+    public MyFtpServer(Path confPath, PrintStream log, InputStream controlInput) {
+        sharedComponents.log = log;
+        this.controlInput = new BufferedReader(new InputStreamReader(controlInput));
+        setupDefaults();
+        if (confPath != null) {
+            try {
+                parseConfig(confPath);
+            } catch (IOException e) {
+                e.printStackTrace(sharedComponents.log);
+                setupDefaults();
+            }
+        }
+    }
+
     private void parseConfig(Path path) throws IOException {
         Properties properties = ConfigParser.parseConfig(path);
         if (properties.containsKey("port")) {
@@ -53,20 +67,6 @@ public class MyFtpServer implements Runnable {
         port = DEFAULT_PORT;
         connectionExecutor = DEFAULT_CONNECTION_EXECUTOR;
         sharedComponents.rootDir = DEFAULT_ROOT_DIR;
-    }
-
-    public MyFtpServer(Path confPath, PrintStream log, InputStream controlInput) {
-        sharedComponents.log = log;
-        this.controlInput = new BufferedReader(new InputStreamReader(controlInput));
-        setupDefaults();
-        if (confPath != null) {
-            try {
-                parseConfig(confPath);
-            } catch (IOException e) {
-                e.printStackTrace(sharedComponents.log);
-                setupDefaults();
-            }
-        }
     }
 
     public void start() {

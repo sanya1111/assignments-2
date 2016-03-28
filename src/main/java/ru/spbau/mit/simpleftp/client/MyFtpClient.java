@@ -25,7 +25,20 @@ public class MyFtpClient {
     private MyFtpSocketResponseReader socketReader;
     private PrintStream log;
 
-    void parseConfig(Path configPath) throws IOException {
+    public MyFtpClient(Path configPath, PrintStream log) {
+        this.log = log;
+        setupDefauls();
+        if (configPath != null) {
+            try {
+                parseConfig(configPath);
+            } catch (IOException e) {
+                e.printStackTrace(log);
+                setupDefauls();
+            }
+        }
+    }
+
+    private void parseConfig(Path configPath) throws IOException {
         Properties properties = ConfigParser.parseConfig(configPath);
         if (properties.containsKey("host")) {
             host = properties.getProperty("host");
@@ -38,19 +51,6 @@ public class MyFtpClient {
     private void setupDefauls() {
         host = HOST_DEFAULT;
         port = PORT_DEFAULT;
-    }
-
-    public MyFtpClient(Path configPath, PrintStream log) {
-        this.log = log;
-        setupDefauls();
-        if (configPath != null) {
-            try {
-                parseConfig(configPath);
-            } catch (IOException e) {
-                e.printStackTrace(log);
-                setupDefauls();
-            }
-        }
     }
 
     public synchronized void connect() throws UnknownHostException, IOException {
