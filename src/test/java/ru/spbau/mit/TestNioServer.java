@@ -34,7 +34,9 @@ public class TestNioServer {
         int status = channel.read(buffer);
         while (status != -1) {
             buffer.flip();
-            fileChannel.write(buffer);
+            while (buffer.hasRemaining()) {
+                fileChannel.write(buffer);
+            }
             buffer.clear();
             status = channel.read(buffer);
         }

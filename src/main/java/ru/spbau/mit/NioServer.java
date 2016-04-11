@@ -34,7 +34,6 @@ public class NioServer implements Runnable {
     private Selector selector;
     private int port;
 
-
     public NioServer(Path filePath, PrintStream log, int port) {
         this.filePath = filePath;
         this.log = log;
@@ -64,29 +63,29 @@ public class NioServer implements Runnable {
         }
     }
 
-    private void sendFile(SocketChannel savedSocketChanel, HelperContext context) {
-        int status = 0;
-        while (true) {
-            try {
+    private boolean sendFile(SocketChannel savedSocketChanel, HelperContext context) {
+        try {
+            if (!context.savedByteBuffer.hasRemaining()) {
                 context.savedByteBuffer.clear();
-                status = context.savedFileChannel.read(context.savedByteBuffer);
-                if (status != -1) {
-                    context.savedByteBuffer.flip();
-                    int num = savedSocketChanel.write(context.savedByteBuffer);
-                } else {
+                int status = context.savedFileChannel.read(context.getSavedByteBuffer());
+                if (status == -1) {
                     closeAllChannels(savedSocketChanel, context);
-                    break;
+                    return true;
                 }
-            } catch (IOException e) {
-                e.printStackTrace(log);
-                closeAllChannels(savedSocketChanel, context);
-                break;
+                context.savedByteBuffer.flip();
             }
+            savedSocketChanel.write(context.getSavedByteBuffer());
+        } catch (IOException e) {
+            e.printStackTrace(log);
+            closeAllChannels(savedSocketChanel, context);
+            return true;
         }
+        return false;
     }
 
     private HelperContext newHelperContext() throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_BUF_SIZE);
+        buffer.flip();
         FileChannel fileChannel = FileChannel.open(filePath);
         return new HelperContext(fileChannel, buffer);
     }
@@ -117,7 +116,9 @@ public class NioServer implements Runnable {
         if (key.isAcceptable()) {
             newClientConnected((ServerSocketChannel) key.channel());
         } else if (key.isWritable()) {
-            sendFile((SocketChannel) key.channel(), (HelperContext) key.attachment());
+            if (sendFile((SocketChannel) key.channel(), (HelperContext) key.attachment())) {
+                key.cancel();
+            }
         }
     }
 
