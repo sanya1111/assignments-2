@@ -77,7 +77,6 @@ public class Tracker implements Runnable {
         try {
             sharedComponents.setFilesProcessor(new FilesProcessor(DEFAULT_FILE_INFOS_PATH));
         } catch (IOException e) {
-            e.printStackTrace(sharedComponents.log);
         }
         sharedComponents.setSeedsProcessor(new SeedsProcessor());
     }

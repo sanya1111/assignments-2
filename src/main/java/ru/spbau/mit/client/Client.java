@@ -167,7 +167,7 @@ public class Client implements Runnable {
 
         downloadControlThread.start();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(()->closeAll()));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::closeAll));
     }
 
     private void loadProps(Properties properties) {
@@ -209,7 +209,6 @@ public class Client implements Runnable {
             sharedComponents.setFilesManager(new FilesManager(DEFAULT_FILE_MANAGER_PROPS_PATH,
                     DEFAULT_PART_SIZE, DEFAULT_PART_FILE_SIZE));
         } catch (IOException e) {
-            e.printStackTrace(sharedComponents.log);
         }
         tasksExecutor = DEFAULT_CONNECTION_EXECUTOR;
         trackerAdress = DEFAULT_TRACKER_ADRESS;
@@ -394,9 +393,10 @@ public class Client implements Runnable {
             pendingMergeTasks.entrySet().forEach(entry -> {
                 try {
                     int fileId = entry.getKey();
+                    int partsNum = sharedComponents.getFilesManager().getFilePartsNum(
+                            readyToDownloadFiles.get(entry.getKey()));
                     entry.getValue().get();
-                    for (int partId = 0; partId < sharedComponents.getFilesManager().getFilePartsNum(
-                            readyToDownloadFiles.get(entry.getKey())); partId++) {
+                    for (int partId = 0; partId < partsNum; partId++) {
                         Path partPath = sharedComponents.getFilesManager()
                                 .getPartFilePath(readyToDownloadFiles.get(fileId),
                                 partId);
@@ -404,7 +404,6 @@ public class Client implements Runnable {
                         try {
                             Files.delete(partPath);
                         } catch (Exception e) {
-                            e.printStackTrace(sharedComponents.getLog());
                         }
                     }
                     sharedComponents.getFilesManager().insertNewDistributedFile(fileId,
