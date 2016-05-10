@@ -3,6 +3,7 @@ package ru.spbau.mit.tracker;
 import ru.spbau.mit.common.ConfigProcessor;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,14 +17,16 @@ public class FilesProcessor {
     public FilesProcessor(Path filesInfoPath) throws IOException {
         this.filesInfoPath = filesInfoPath;
         currentUpdatedFileInfos = new ArrayList<>();
-        Properties props = ConfigProcessor.parseConfig(filesInfoPath);
-        for (Map.Entry<Object, Object> entry : props.entrySet()) {
-            String[] parsedParts = ((String) entry.getKey()).split("\\.");
-            FileInfo fileInfo = new FileInfo();
-            fileInfo.setName(parsedParts[0]);
-            fileInfo.setId(Integer.valueOf(parsedParts[1]));
-            fileInfo.setSize(Long.valueOf((String) entry.getValue()));
-            currentUpdatedFileInfos.add(fileInfo);
+        if (Files.exists(filesInfoPath)) {
+            Properties props = ConfigProcessor.parseConfig(filesInfoPath);
+            for (Map.Entry<Object, Object> entry : props.entrySet()) {
+                String[] parsedParts = ((String) entry.getKey()).split("\\.");
+                FileInfo fileInfo = new FileInfo();
+                fileInfo.setName(parsedParts[0]);
+                fileInfo.setId(Integer.valueOf(parsedParts[1]));
+                fileInfo.setSize(Long.valueOf((String) entry.getValue()));
+                currentUpdatedFileInfos.add(fileInfo);
+            }
         }
     }
 

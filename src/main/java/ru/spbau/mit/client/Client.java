@@ -209,6 +209,7 @@ public class Client implements Runnable {
             sharedComponents.setFilesManager(new FilesManager(DEFAULT_FILE_MANAGER_PROPS_PATH,
                     DEFAULT_PART_SIZE, DEFAULT_PART_FILE_SIZE));
         } catch (IOException e) {
+            e.printStackTrace(sharedComponents.getLog());
         }
         tasksExecutor = DEFAULT_CONNECTION_EXECUTOR;
         trackerAdress = DEFAULT_TRACKER_ADRESS;

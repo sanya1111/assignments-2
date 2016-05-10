@@ -20,29 +20,31 @@ public class FilesManager {
         this.partSize = partSize;
         this.propsPath = propsPath;
         this.partFileSize = partFileSize;
-        try {
-            Properties props = ConfigProcessor.parseConfig(propsPath);
-            for (Map.Entry<Object, Object> entry : props.entrySet()) {
-                String[] parsedKeyParts = ((String) entry.getKey()).split(",");
-                String[] parsedValueParts = ((String) entry.getValue()).split(",");
-                int id = Integer.valueOf(parsedKeyParts[0]);
-                int partId = Integer.valueOf(parsedKeyParts[1]);
+        if (Files.exists(propsPath)) {
+            try {
+                Properties props = ConfigProcessor.parseConfig(propsPath);
+                for (Map.Entry<Object, Object> entry : props.entrySet()) {
+                    String[] parsedKeyParts = ((String) entry.getKey()).split(",");
+                    String[] parsedValueParts = ((String) entry.getValue()).split(",");
+                    int id = Integer.valueOf(parsedKeyParts[0]);
+                    int partId = Integer.valueOf(parsedKeyParts[1]);
 
-                int type = Integer.valueOf(parsedValueParts[0]);
-                Path currentFilePath = Paths.get(parsedValueParts[1]);
-                long size = Long.valueOf(parsedValueParts[2]);
-                if (type == 0) {
-                    long offset = Long.valueOf(parsedValueParts[3]);
-                    insertDistributedFileEntry(id, partId, new DistributedFilesEntry(currentFilePath, offset,
-                            size));
-                } else {
-                    insertNewReadyToDownloadFile(id, new ReadyToDownloadFilesEntry(currentFilePath, size));
+                    int type = Integer.valueOf(parsedValueParts[0]);
+                    Path currentFilePath = Paths.get(parsedValueParts[1]);
+                    long size = Long.valueOf(parsedValueParts[2]);
+                    if (type == 0) {
+                        long offset = Long.valueOf(parsedValueParts[3]);
+                        insertDistributedFileEntry(id, partId, new DistributedFilesEntry(currentFilePath, offset,
+                                size));
+                    } else {
+                        insertNewReadyToDownloadFile(id, new ReadyToDownloadFilesEntry(currentFilePath, size));
+                    }
                 }
+            } catch (IOException e) {
+                distributedFiles = new HashMap<>();
+                readyToDownloadFiles = new HashMap<>();
+                throw e;
             }
-        } catch (IOException e) {
-            distributedFiles = new HashMap<>();
-            readyToDownloadFiles = new HashMap<>();
-            throw e;
         }
     }
 
