@@ -1,74 +1,84 @@
 package ru.spbau.mit;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import ru.spbau.mit.client.Client;
-import ru.spbau.mit.client.response.StatResponse;
 import ru.spbau.mit.tracker.FilesProcessor;
 import ru.spbau.mit.tracker.Tracker;
 import ru.spbau.mit.tracker.response.ListResponse;
 import ru.spbau.mit.tracker.response.SourcesResponse;
 import ru.spbau.mit.tracker.response.UploadResponse;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestTorrent {
     private static final Path SRC_PREFIX = Paths.get("src/test");
-    private static final Path TRACKER_PROPERTIES = SRC_PREFIX.resolve(Paths.get("resources/tracker.properties"));
-    private static final Path CLIENT1_FILE_MANAGER_PATH = SRC_PREFIX.resolve(Paths.get("resources/file_manager1"
-            + ".properties"));
-    private static final Path CLIENT2_FILE_MANAGER_PATH = SRC_PREFIX.resolve(Paths.get("resources/file_manager2"
-            + ".properties"));
-    private static final Path CLIENT3_FILE_MANAGER_PATH = SRC_PREFIX.resolve(Paths.get("resources/file_manager3"
-            + ".properties"));
     private static final int CLIENT1_PORT = 6665;
     private static final int CLIENT2_PORT = 6666;
     private static final int CLIENT3_PORT = 6667;
 
     private static final Path INITIAL_FILE_PATH = SRC_PREFIX.resolve(Paths.get("resources/initial.jpg"));
-    private static final int INITIAL_FILE_PARTS_NUM = 26;
-    private static final Path CLIENT2_FILE_PATH = SRC_PREFIX.resolve(Paths.get("resources/client2.jpg"));
-    private static final Path CLIENT3_FILE_PATH = SRC_PREFIX.resolve(Paths.get("resources/client3.jpg"));
-
     private static final int TRACKER_READY_TIMEOUT = 1000;
     private static final int SLEEPING_TIMEOUT = 50;
 
-    private static Client newClient1() {
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
+    private Path client2FilePath;
+    private Path client3FilePath;
+
+    private Client newClient1() throws IOException {
         Properties props = new Properties();
         props.setProperty("port", String.valueOf(CLIENT1_PORT));
-        props.setProperty("file_manager_path", String.valueOf(CLIENT1_FILE_MANAGER_PATH));
+        props.setProperty("file_manager_path", String.valueOf(folder.newFile().getAbsolutePath()));
         return new Client(System.err, System.in, props);
     }
 
-    private static Client newClient2() {
+    private Client newClient2() throws IOException {
         Properties props = new Properties();
         props.setProperty("port", String.valueOf(CLIENT2_PORT));
-        props.setProperty("file_manager_path", String.valueOf(CLIENT2_FILE_MANAGER_PATH));
+        props.setProperty("file_manager_path", String.valueOf(folder.newFile().getAbsolutePath()));
+
+        client2FilePath = folder.newFile().toPath();
         return new Client(System.err, System.in, props);
     }
 
-    private static Client newClient3() {
+    private Client newClient3() throws IOException {
         Properties props = new Properties();
         props.setProperty("port", String.valueOf(CLIENT3_PORT));
-        props.setProperty("file_manager_path", String.valueOf(CLIENT3_FILE_MANAGER_PATH));
+        props.setProperty("file_manager_path", String.valueOf(folder.newFile().getAbsolutePath()));
+
+        client3FilePath = folder.newFile().toPath();
         return new Client(System.err, System.in, props);
+    }
+
+    private Tracker newTracker() throws IOException {
+        File trackerProps = folder.newFile();
+        Path fileInfosPath = folder.newFile().toPath();
+        FileOutputStream stream = new FileOutputStream(trackerProps);
+        Properties props = new Properties();
+        props.setProperty("file_infos_path", fileInfosPath.toString());
+        props.store(stream, "");
+        stream.close();
+
+        return new Tracker(trackerProps.toPath(), System.err, System.in);
     }
 
     @org.junit.Test
     public void test() throws IOException {
-        new Thread(new Tracker(TRACKER_PROPERTIES, System.err, System.in)).start();
+        new Thread(newTracker()).start();
         try {
             Thread.sleep(TRACKER_READY_TIMEOUT);
         } catch (InterruptedException e) {
@@ -97,7 +107,7 @@ public class TestTorrent {
         assertEquals(response.getFileInfos().size(), 1);
 
         FilesProcessor.FileInfo downloadFileInfo = response.getFileInfos().get(0);
-        client2.addNewReadyToDownloadFile(downloadFileInfo.getId(), downloadFileInfo.getSize(), CLIENT2_FILE_PATH);
+        client2.addNewReadyToDownloadFile(downloadFileInfo.getId(), downloadFileInfo.getSize(), client2FilePath);
         new Thread(client2).start();
 
         while (!client2.haveAllFilesDownloaded()) {
@@ -109,7 +119,7 @@ public class TestTorrent {
         }
         client2.sendSeedInfoToTracker();
 
-        assertTrue(FileUtils.contentEquals(INITIAL_FILE_PATH.toFile(), CLIENT2_FILE_PATH.toFile()));
+        assertTrue(FileUtils.contentEquals(INITIAL_FILE_PATH.toFile(), client2FilePath.toFile()));
     }
 
     private void checkWithAllClients(Client client1, Client client2, Client client3) throws IOException {
@@ -127,27 +137,7 @@ public class TestTorrent {
             ports.remove(socketAddress.getPort());
         });
 
-        final int delPartition = 10;
-        for (int i = 0; i < delPartition; i++) {
-            client1.removeDistributionPart(downloadFileInfo.getId(), i);
-        }
-        StatResponse statResponse = client3.getFilePartsInfo(downloadFileInfo.getId(),
-                new InetSocketAddress(InetAddress.getLocalHost(), CLIENT1_PORT));
-
-        assertEquals(statResponse.getParts(),
-                Stream.iterate(delPartition, x -> x + 1).limit(INITIAL_FILE_PARTS_NUM - delPartition)
-                        .collect(Collectors.toList()));
-
-        for (int i = delPartition; i < INITIAL_FILE_PARTS_NUM; i++) {
-            client2.removeDistributionPart(downloadFileInfo.getId(), i);
-        }
-
-        statResponse = client3.getFilePartsInfo(downloadFileInfo.getId(),
-                new InetSocketAddress(InetAddress.getLocalHost(), CLIENT2_PORT));
-
-        assertEquals(statResponse.getParts(), Stream.iterate(0, x -> x + 1).limit(delPartition).collect(Collectors
-                .toList()));
-        client3.addNewReadyToDownloadFile(downloadFileInfo.getId(), downloadFileInfo.getSize(), CLIENT3_FILE_PATH);
+        client3.addNewReadyToDownloadFile(downloadFileInfo.getId(), downloadFileInfo.getSize(), client3FilePath);
         new Thread(client3).start();
 
         while (!client3.haveAllFilesDownloaded()) {
@@ -157,6 +147,6 @@ public class TestTorrent {
                 e.printStackTrace();
             }
         }
-        assertTrue(FileUtils.contentEquals(INITIAL_FILE_PATH.toFile(), CLIENT3_FILE_PATH.toFile()));
+        assertTrue(FileUtils.contentEquals(INITIAL_FILE_PATH.toFile(), client3FilePath.toFile()));
     }
 }

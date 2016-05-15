@@ -21,10 +21,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Client implements Runnable {
-    private static final long DEFAULT_PART_SIZE = 8192L;
+    private static final long DEFAULT_PART_SIZE = 1L << 20;
     private static final long DEFAULT_PART_FILE_SIZE = 1L << 30;
     private static final int DEFAULT_PORT = 0;
-    private static final int DEFAULT_THREADS_NUM = 30;
+    private static final int DEFAULT_THREADS_NUM = 10;
     private static final InetSocketAddress DEFAULT_TRACKER_ADRESS = new InetSocketAddress("127.0.0.1", 8081);
     private static final Path DEFAULT_FILE_MANAGER_PROPS_PATH = Paths.get("src/test/resources/file_manager"
             + ".properties");
@@ -244,6 +244,8 @@ public class Client implements Runnable {
     public class SharedComponents {
 
         private PrintStream log;
+        private PrintStream statusLog;
+
         private FilesManager filesManager;
 
         public FilesManager getFilesManager() {

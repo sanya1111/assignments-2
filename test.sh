@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 PROJ=$PWD
@@ -6,7 +6,7 @@ TMP=/tmp/torrent
 SERVER_FILE_INFOS=file_infos.properties
 SERVER_PROPS=tracker.properties
 CLIENT_PROPS=client.properties
-REFERENCE_FILE=$PROJ/src/test/resources/initial.jpg
+REFERENCE_FILE=/home/sanya1/Videos/11
 
 rm -rf $TMP
 mkdir $TMP
@@ -46,7 +46,7 @@ $CLIENT upload $REFERENCE_FILE
 $CLIENT list
 $CLIENT distribute 0 $REFERENCE_FILE $CLIENT_PROPS
 $CLIENT run $CLIENT_PROPS 9000 </dev/null &
-PID1=$1
+PID1=$!
 
 sleep 2
 
@@ -60,9 +60,14 @@ cd $TMP/client3
 $CLIENT download 0 $FILE_SUFFIX $CLIENT_PROPS
 $CLIENT seeds 0
 $CLIENT run $CLIENT_PROPS 11000 </dev/null &
-PID2=$!
+PID3=$!
 
-sleep 10
+while [[ $(ls $TMP/client2/downloads | grep ".part") != '' || $(ls $TMP/client3/downloads | grep ".part") != '' || ! -e $TMP/client3/downloads/$FILE_SUFFIX || ! -e $TMP/client2/downloads/$FILE_SUFFIX ]]; do
+	sleep 2;
+done
+
+
+echo "STARTED CHECKING"
 
 cmp --silent $TMP/client2/downloads/$FILE_SUFFIX $REFERENCE_FILE || echo "Bad file content for client 2"
 cmp --silent $TMP/client3/downloads/$FILE_SUFFIX $REFERENCE_FILE || echo "Bad file content for client 3"

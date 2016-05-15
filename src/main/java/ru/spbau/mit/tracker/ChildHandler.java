@@ -3,6 +3,7 @@ package ru.spbau.mit.tracker;
 import ru.spbau.mit.tracker.request.*;
 import ru.spbau.mit.tracker.response.*;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -30,7 +31,7 @@ public class ChildHandler implements Runnable {
             return;
         }
 
-        String hostAddr = socket.getInetAddress().getHostAddress();
+        String hostAddr = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
 
         sharedComponents.getLog().println(String.format("New client %s have connected", hostAddr));
 
@@ -38,6 +39,9 @@ public class ChildHandler implements Runnable {
             TrackerRequest request = null;
             try {
                 request = requestReader.nextRequest();
+            } catch (EOFException e2) {
+                sharedComponents.getLog().println(String.format("Client %s have disconnected", hostAddr));
+                break;
             } catch (IOException e) {
                 e.printStackTrace(sharedComponents.getLog());
                 break;
@@ -66,7 +70,6 @@ public class ChildHandler implements Runnable {
                     String.format("ClientResponse to client %s to %d request have sended", hostAddr, requestId));
         }
 
-        sharedComponents.getLog().println(String.format("Client %s have disconnected", hostAddr));
         closeSocket();
     }
 

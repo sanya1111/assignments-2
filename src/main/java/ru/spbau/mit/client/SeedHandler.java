@@ -9,6 +9,7 @@ import ru.spbau.mit.client.response.ClientResponse;
 import ru.spbau.mit.client.response.GetWritableResponse;
 import ru.spbau.mit.client.response.StatResponse;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -33,7 +34,7 @@ public class SeedHandler implements Runnable {
             return;
         }
 
-        String hostAddr = socket.getInetAddress().getHostAddress();
+        String hostAddr = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
 
         sharedComponents.getLog().println(String.format("New client %s have connected", hostAddr));
 
@@ -41,6 +42,9 @@ public class SeedHandler implements Runnable {
             ClientRequest request = null;
             try {
                 request = requestReader.nextRequest();
+            } catch (EOFException e2) {
+                sharedComponents.getLog().println(String.format("Client %s have disconnected", hostAddr));
+                break;
             } catch (IOException e) {
                 e.printStackTrace(sharedComponents.getLog());
                 break;
@@ -69,7 +73,6 @@ public class SeedHandler implements Runnable {
                     String.format("ClientResponse to client %s to %d request have sended", hostAddr, requestId));
         }
 
-        sharedComponents.getLog().println(String.format("Client %s have disconnected", hostAddr));
         closeSocket();
     }
 

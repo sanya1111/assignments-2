@@ -91,7 +91,7 @@ public final class TorrentClientMain {
                 settings.setTrackerPort(args[2]);
             }
             try {
-                ListResponse response = new Client(System.err, System.in, settings).listRequestToTracker();
+                ListResponse response = new Client(System.out, System.in, settings).listRequestToTracker();
                 printListResponse(response);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -112,7 +112,7 @@ public final class TorrentClientMain {
                 settings.setTrackerPort(args[3]);
             }
             try {
-                UploadResponse response = new Client(System.err, System.in, settings)
+                UploadResponse response = new Client(System.out, System.in, settings)
                         .uploadNewFileToTracker(filePath);
                 printUploadResponse(response);
             } catch (IOException e) {
@@ -134,7 +134,7 @@ public final class TorrentClientMain {
                 settings.setTrackerPort(args[3]);
             }
 
-            SourcesResponse response = new Client(System.err, System.in, settings).getFileSeeds(fileId);
+            SourcesResponse response = new Client(System.out, System.in, settings).getFileSeeds(fileId);
             printSourcesResponse(response);
             return true;
         }
@@ -148,7 +148,7 @@ public final class TorrentClientMain {
             ConsoleClientSettings settings = new ConsoleClientSettings();
             settings.setFileManagerPath(args[3]);
             try {
-                new Client(System.err, System.in, settings).addNewDistributionFile(fileId, filePath);
+                new Client(System.out, System.in, settings).addNewDistributionFile(fileId, filePath);
                 System.out.println("distribution record added");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -164,7 +164,7 @@ public final class TorrentClientMain {
             ConsoleClientSettings settings = new ConsoleClientSettings();
             settings.setFileManagerPath(args[2]);
             try {
-                new Client(System.err, System.in, settings).removeDistribution(fileId);
+                new Client(System.out, System.in, settings).removeDistribution(fileId);
                 System.out.println("distribution record removed");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -187,7 +187,7 @@ public final class TorrentClientMain {
             if (args.length > 4) {
                 settings.setTrackerPort(args[4]);
             }
-            new Client(System.err, System.in, settings).run();
+            new Client(System.out, System.in, settings).run();
             return true;
         }
         return false;
@@ -199,7 +199,7 @@ public final class TorrentClientMain {
             try {
                 InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(args[2]),
                         Integer.parseInt(args[3]));
-                printStatResponse(new Client(System.err, System.in, new Properties()).getFilePartsInfo(fileId,
+                printStatResponse(new Client(System.out, System.in, new Properties()).getFilePartsInfo(fileId,
                         address));
             } catch (UnknownHostException e) {
                 e.printStackTrace();
@@ -221,7 +221,7 @@ public final class TorrentClientMain {
             if (args.length > 5) {
                 settings.setTrackerPort(args[5]);
             }
-            Client client = new Client(System.err, System.in, settings);
+            Client client = new Client(System.out, System.in, settings);
             ListResponse response = null;
             try {
                 response = client.listRequestToTracker();

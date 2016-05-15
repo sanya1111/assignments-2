@@ -10,8 +10,7 @@ import ru.spbau.mit.tracker.response.SourcesResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Set;
 
 public final class ClientTasks {
@@ -93,8 +92,9 @@ public final class ClientTasks {
             return;
         }
 
-        sharedComponents.getLog().println(String.format("Ready to download %s from %s:%d", downloadPartPath
-                .toString(), seed.getAddress().getHostAddress(), seed.getPort()));
+        sharedComponents.getLog().println(String.format("Ready to download %s ( part id %d) from %s:%d",
+                downloadPartPath
+                .toString(), request.getPart(), seed.getAddress().getHostAddress(), seed.getPort()));
 
         try {
             connection.getRequestWriter().writeRequest(request);
@@ -108,8 +108,9 @@ public final class ClientTasks {
             return;
         }
 
-        sharedComponents.getLog().println(String.format("Finished download %s from %s:%d", downloadPartPath
-                .toString(), seed.getAddress().getHostAddress(), seed.getPort()));
+        sharedComponents.getLog().println(String.format("Finished download %s ( part id %d) from %s:%d",
+                downloadPartPath
+                .toString(), request.getPart(), seed.getAddress().getHostAddress(), seed.getPort()));
         try {
             connection.closeAll();
         } catch (IOException e) {
@@ -122,7 +123,7 @@ public final class ClientTasks {
         components.getLog().println(String.format("Ready to merge parts to %s", fileDownloadPath.toString()));
         try {
             if (partsPath.size() == 1) {
-                Files.move(partsPath.iterator().next(), fileDownloadPath);
+                Files.move(partsPath.iterator().next(), fileDownloadPath, StandardCopyOption.REPLACE_EXISTING);
             } else {
                 OutputStream outputStream = Files.newOutputStream(fileDownloadPath);
                 for (Path path : partsPath) {
